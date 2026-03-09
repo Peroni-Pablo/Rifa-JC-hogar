@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Loteria JC Hogar</title>
+    <link rel="stylesheet" href="admin-style.css">
+</head>
+<body>
+    <div class="contenedor">
+        <h1>Panel de Administrador</h1>
+        <p class="subtitulo">Gestiona los números y participantes</p>
+
+        <div class="controles">
+            <button class="btn-limpiar" onclick="limpiarDatos()">Limpiar todos los datos</button>
+            <button id="toggleNumeros" class="btn-toggle" onclick="toggleNumeros()">Desactivar números</button>
+            <button class="btn-descargar" onclick="descargarRifa()">Descargar rifa</button>
+        </div>
+
+        <div class="precios-section">
+            <h2>Editar Precios</h2>
+            <div class="precio-inputs">
+                <div class="input-group">
+                    <label>1 número ($)</label>
+                    <input type="number" id="precio1" placeholder="5000" min="0">
+                </div>
+                <div class="input-group">
+                    <label>2 números ($)</label>
+                    <input type="number" id="precio2" placeholder="8000" min="0">
+                </div>
+                <button class="btn-guardar-precios" onclick="guardarPrecios()">Guardar precios</button>
+            </div>
+        </div>
+
+        <div class="imagen-sorteo-section">
+            <h2>Foto del Sorteo</h2>
+            <div class="imagen-inputs">
+                <input type="file" id="imagenSorteo" accept="image/*">
+                <button class="btn-guardar-imagen" onclick="guardarImagenSorteo()">Guardar imagen</button>
+                <button class="btn-eliminar-imagen" onclick="eliminarImagenSorteo()">Eliminar imagen</button>
+                <div id="previewImagen" class="preview-imagen"></div>
+            </div>
+        </div>
+
+        <table class="table-registros">
+            <thead>
+                <tr>
+                    <th>Número</th>
+                    <th>Nombre</th>
+                    <th>DNI</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="tablaRegistros">
+                <tr>
+                    <td colspan="4" class="sin-datos">No hay registros aún</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script src="admin-script.js"></script>
+</body>
+</html>

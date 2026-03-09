@@ -1,0 +1,106 @@
+/// prueba para ver si se carga la web
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rifa de JC Hogar</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- background image element; will stay centered in the viewport -->
+    <img src="templates/fondo1.png" class="bg" alt="fondo">
+
+    <div class="contenedor">
+        
+        <div class="subtitulo" style="color:aliceblue">Elegí un número del 00 al 99</div>
+
+        <!-- Icono de información -->
+        <div class="info-container">
+            <img id="infoIcon" src="templates/image.png" alt="info" /><br><br>
+            <img id="coinIcon" src="templates/coin.png" alt="coin">
+        </div>
+
+        <!-- Aquí se generan automáticamente los botones -->
+        <div class="grid" id="gridNumeros"></div>
+    </div>
+
+    <!-- Modal emergente -->
+    <div id="miModal" class="modal" aria-hidden="true">
+        <div class="modal-content">
+            <button id="cerrarModal" class="modal-close">×</button>
+            <p><b style="color:rgb(255, 102, 0)">Rifa JC hogar</b> <br>
+                mas de un premio para que el ganador pueda elegir <br><br>
+                <b>productos exclusivos del local:</b> <br>
+                - Celulares <br>
+                - Electrodomesticos <br>
+                - Articulos para el hogar <br>
+                - Bicicletas <br>
+                - Tecnologia <br>
+                - Y mucho mas! <br><br>
+                <b>juegan todos los N° del 00 al 99 </b> <br>
+                <b>Bases y condiciones:</b><br>
+                - El numero unicamente se anota una vez pago,<br>
+                de lo contrario queda disponible para la venta. SIN EXCEPCION <br><br>
+                <b>- 1 solo ganador por sorteo</b><br>
+                El ganador tendra la posibilidad de elegir entre los premios disponibles (se elige uno solo) <br><br>
+                - Una vez agotados los números, se realizará el sorteo por la quiniela nacional NOCTURNA <br>
+                (Las 2 ultimas cifras del número a la cabeza es el ganador) <br><br>
+                <b>- medios de pago:</b><br>
+                - Efectivo (en nuestro local) <br>
+                - Transferencia (A traves de whatsapp) <br><br>
+                <b style="color: red;">¡Importante!</b><br>
+                - Una vez confimado el pago se reserva el numero (no puede ser cambiado ni cancelado) <br><br>
+                dato! <br> cuando se termina una rifa se comienza una nueva al otro dia <br>
+
+                <b style="color:rgb(255, 102, 0)">¡no te quedes afuera! uno de los premios podria ser tuyo...</b><br>
+                suerte para todos! - <b style="color:rgb(255, 102, 0)">JC Hogar</b> -
+
+                
+            </p>
+        </div>
+    </div>
+
+    <!-- Modal para CBU -->
+    <div id="cbuModal" class="modal" aria-hidden="true">
+        <div class="modal-content">
+            <button id="cerrarCbuModal" class="modal-close">×</button>
+            <p>Alias: <b style="color:orangered">juanki2001</b></p><br>
+            <p>C.B.U: <b>rellenar</b></p>
+            <p>- 1 numero = $<span id="precio1">5000</span></p><br>
+            <p>- 2 numeros = $<span id="precio2">8000</span></p> <br><br>
+        </div>
+    </div>
+
+    <!-- Modal de registro de usuario -->
+    <div id="registroModal" class="modal" aria-hidden="true">
+        <div class="modal-content">
+            <button id="cerrarRegistro" class="modal-close">×</button>
+            <p>Elegiste el número <span id="numeroSeleccionado"></span></p>
+            <label>Nombre:
+                <input type="text" id="inputNombre" />
+            </label>
+            <label>D.N.I:
+                <input type="text" id="inputDni" />
+            </label>
+            <div class="modal-actions">
+                <button id="cancelarRegistro" class="btn-cancel">Cancelar</button>
+                <button id="aceptarRegistro" class="btn-accept">Aceptar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de imagen del sorteo -->
+    <div id="imagenSorteoModal" class="modal" aria-hidden="true">
+        <div class="modal-content modal-imagen">
+            <button id="cerrarImagenModal" class="modal-close">×</button>
+            <img id="imagenSorteoImg" src="" alt="Sorteo" style="max-width: 100%; max-height: 80vh;">
+        </div>
+    </div>
+
+    <!-- Conectamos el archivo JavaScript -->
+    <script src="script.js"></script>
+
+</body>
+</html>
