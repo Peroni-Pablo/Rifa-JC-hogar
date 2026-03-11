@@ -86,35 +86,6 @@ document.addEventListener("DOMContentLoaded", function() {
     // Cargar precios al iniciar la página
     cargarPreciosEnModal();
 
-    // Mostrar modal de imagen del sorteo al cargar la página
-    function mostrarImagenSorteo() {
-        const imagenBase64 = localStorage.getItem("loteria_imagen_sorteo");
-        const imagenSorteoModal = document.getElementById('imagenSorteoModal');
-        const imagenSorteoImg = document.getElementById('imagenSorteoImg');
-        const cerrarImagenModal = document.getElementById('cerrarImagenModal');
-        
-        if (imagenBase64 && imagenSorteoModal) {
-            imagenSorteoImg.src = imagenBase64;
-            imagenSorteoModal.setAttribute('aria-hidden', 'false');
-            
-            if (cerrarImagenModal) {
-                cerrarImagenModal.addEventListener('click', () => {
-                    imagenSorteoModal.setAttribute('aria-hidden', 'true');
-                });
-            }
-            
-            // Cerrar al hacer click fuera del contenido
-            imagenSorteoModal.addEventListener('click', (e) => {
-                if (e.target === imagenSorteoModal) {
-                    imagenSorteoModal.setAttribute('aria-hidden', 'true');
-                }
-            });
-        }
-    }
-    
-    // Mostrar la imagen del sorteo al cargar
-    mostrarImagenSorteo();
-
     // listen for registration modal elements
     const registroModal = document.getElementById('registroModal');
     const cerrarRegistro = document.getElementById('cerrarRegistro');
@@ -224,3 +195,14 @@ function actualizarEstadoNumeros() {
     }
 }
 
+async function cargarNumeros() {
+
+const { data, error } = await supabase
+.from('numeros_rifa')
+.select('*');
+
+console.log(data);
+
+}
+
+cargarNumeros();

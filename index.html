@@ -1,11 +1,11 @@
 <!DOCTYPE html>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rifa de JC Hogar</title>
     <link rel="stylesheet" href="style.css">
-    <script type="module" src="firebase-config.js"></script>
 </head>
 <body>
 
@@ -90,17 +90,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Modal de imagen del sorteo -->
-    <div id="imagenSorteoModal" class="modal" aria-hidden="true">
-        <div class="modal-content modal-imagen">
-            <button id="cerrarImagenModal" class="modal-close">×</button>
-            <img id="imagenSorteoImg" src="" alt="Sorteo" style="max-width: 100%; max-height: 80vh;">
-        </div>
-    </div>
-
-    <script type="module" src="script.js"></script>
-</body>
 
     <!-- Conectamos el archivo JavaScript -->
     <script src="script.js"></script>
