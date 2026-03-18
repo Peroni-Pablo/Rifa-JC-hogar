@@ -62,7 +62,7 @@ async function comprarNumero(numero) {
   // Validar: exactamente 10 dígitos numéricos
   const soloNumeros = telefono.trim().replace(/\s/g, "");
   if (!/^\d{10}$/.test(soloNumeros)) {
-    alert("Ingrese un número de teléfono válido.");
+    alert("Ingrese un número de teléfono válido (exactamente 10 dígitos numéricos).");
     return;
   }
 
@@ -254,4 +254,53 @@ supabaseClient
 // =============================
 cargarNumeros();
 cargarInfoRifa();
-cargarBanner();   // muestra la imagen apenas carga la página
+cargarBanner();
+
+// =============================
+// BLOQUEO GLOBAL DE NÚMEROS
+// =============================
+async function cargarBloqueo() {
+  try {
+    const { data, error } = await supabaseClient
+      .from("config_rifa")
+      .select("bloqueado")
+      .eq("id", 1)
+      .single();
+
+    if (error || !data) return;
+    window._rifaBloqueada = data.bloqueado === true;
+  } catch (err) {
+    console.error("Error al cargar estado de bloqueo:", err);
+  }
+}
+
+// Aplicar bloqueo después de renderizar los botones
+const _cargarNumerosOriginal = cargarNumeros;
+cargarNumeros = async function() {
+  await _cargarNumerosOriginal();
+  if (window._rifaBloqueada) aplicarBloqueoVisual();
+};
+
+function aplicarBloqueoVisual() {
+  const botones = document.querySelectorAll("#numeros button.libre");
+  botones.forEach(btn => {
+    btn.disabled = true;
+    btn.classList.add("bloqueado-global");
+  });
+}
+
+// Tiempo real: si el admin cambia el bloqueo, se actualiza en index al instante
+supabaseClient
+  .channel("config_bloqueo_changes")
+  .on("postgres_changes", { event: "UPDATE", schema: "public", table: "config_rifa" }, async (payload) => {
+    if (payload.new && typeof payload.new.bloqueado !== "undefined") {
+      window._rifaBloqueada = payload.new.bloqueado === true;
+      await _cargarNumerosOriginal();
+      if (window._rifaBloqueada) aplicarBloqueoVisual();
+    }
+  })
+  .subscribe();
+
+cargarBloqueo().then(() => {
+  if (window._rifaBloqueada) aplicarBloqueoVisual();
+});

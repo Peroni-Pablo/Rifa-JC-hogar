@@ -1,11 +1,96 @@
+// =========================
+// LOGIN
+// =========================
+const SESSION_KEY = "rifa_admin_ok";
+
+async function verificarPassword(intento) {
+  const { data, error } = await supabaseClient
+    .from("config_rifa")
+    .select("password_admin")
+    .eq("id", 1)
+    .single();
+
+  if (error || !data?.password_admin) return false;
+  return intento === data.password_admin;
+}
+
+function estaAutenticado() {
+  return sessionStorage.getItem(SESSION_KEY) === "1";
+}
+
+function mostrarPanel() {
+  document.getElementById("pantallaLogin").style.display = "none";
+  document.getElementById("panelAdmin").style.display    = "block";
+}
+
+function mostrarLogin() {
+  document.getElementById("pantallaLogin").style.display = "flex";
+  document.getElementById("panelAdmin").style.display    = "none";
+}
+
+async function intentarLogin() {
+  const pass  = document.getElementById("inputPassword").value;
+  const error = document.getElementById("loginError");
+  const btn   = document.getElementById("btnLogin");
+
+  if (!pass.trim()) return;
+
+  btn.disabled     = true;
+  btn.textContent  = "Verificando...";
+  error.style.display = "none";
+
+  const ok = await verificarPassword(pass.trim());
+
+  if (ok) {
+    sessionStorage.setItem(SESSION_KEY, "1");
+    mostrarPanel();
+    iniciarAdmin();
+  } else {
+    error.style.display = "block";
+    btn.disabled    = false;
+    btn.textContent = "Ingresar";
+  }
+}
+
+// Enter en el input de password dispara login
+document.getElementById("inputPassword").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") intentarLogin();
+});
+
+document.getElementById("btnLogin").addEventListener("click", intentarLogin);
+
+// Mostrar/ocultar contraseña
+document.getElementById("btnVerPass").addEventListener("click", () => {
+  const input = document.getElementById("inputPassword");
+  input.type  = input.type === "password" ? "text" : "password";
+});
+
+// Cerrar sesión
+document.getElementById("btnCerrarSesion").addEventListener("click", () => {
+  sessionStorage.removeItem(SESSION_KEY);
+  document.getElementById("inputPassword").value = "";
+  mostrarLogin();
+});
+
+// Al cargar la página: si ya hay sesión activa, ir directo al panel
+if (estaAutenticado()) {
+  mostrarPanel();
+  iniciarAdmin();
+} else {
+  mostrarLogin();
+}
+
+// =========================
+// VARIABLES DEL PANEL
+// =========================
 const tablaAdmin = document.getElementById("tablaAdmin");
 
-const tituloModalInput = document.getElementById("tituloModalInput");
+const tituloModalInput    = document.getElementById("tituloModalInput");
 const subtituloModalInput = document.getElementById("subtituloModalInput");
-const valorNumeroInput = document.getElementById("valorNumeroInput");
-const formaPagoInput = document.getElementById("formaPagoInput");
-const whatsappInput = document.getElementById("whatsappInput");
-const mensajeExtraInput = document.getElementById("mensajeExtraInput");
+const valorNumeroInput    = document.getElementById("valorNumeroInput");
+const formaPagoInput      = document.getElementById("formaPagoInput");
+const whatsappInput       = document.getElementById("whatsappInput");
+const mensajeExtraInput   = document.getElementById("mensajeExtraInput");
 
 const btnGuardarConfig = document.getElementById("btnGuardarConfig");
 const btnLimpiarGrilla = document.getElementById("btnLimpiarGrilla");
@@ -547,3 +632,185 @@ if (btnQuitarImagen) {
 
 // Cargar imagen actual al iniciar el admin
 cargarImagenActual();
+
+// =========================
+// CAMBIAR CONTRASEÑA
+// =========================
+async function cambiarPassword() {
+  const actual    = document.getElementById("passActualInput").value.trim();
+  const nueva     = document.getElementById("passNuevaInput").value.trim();
+  const confirmar = document.getElementById("passConfirmarInput").value.trim();
+
+  if (!actual || !nueva || !confirmar) {
+    alert("Completá todos los campos.");
+    return;
+  }
+
+  if (nueva !== confirmar) {
+    alert("La contraseña nueva y la confirmación no coinciden.");
+    return;
+  }
+
+  if (nueva.length < 6) {
+    alert("La contraseña nueva debe tener al menos 6 caracteres.");
+    return;
+  }
+
+  // Verificar que la contraseña actual sea correcta
+  const ok = await verificarPassword(actual);
+  if (!ok) {
+    alert("La contraseña actual es incorrecta.");
+    return;
+  }
+
+  // Guardar la nueva contraseña
+  const { error } = await supabaseClient
+    .from("config_rifa")
+    .update({ password_admin: nueva })
+    .eq("id", 1);
+
+  if (error) {
+    alert("Error al cambiar la contraseña: " + error.message);
+    return;
+  }
+
+  alert("✅ Contraseña cambiada correctamente.");
+  document.getElementById("passActualInput").value    = "";
+  document.getElementById("passNuevaInput").value     = "";
+  document.getElementById("passConfirmarInput").value = "";
+}
+
+document.getElementById("btnCambiarPass").addEventListener("click", cambiarPassword);
+
+// =========================
+// BLOQUEAR / DESBLOQUEAR NÚMEROS
+// =========================
+const btnBloquear = document.getElementById("btnBloquear");
+
+async function cargarEstadoBloqueo() {
+  try {
+    const { data, error } = await supabaseClient
+      .from("config_rifa")
+      .select("bloqueado")
+      .eq("id", 1)
+      .single();
+
+    if (error) return;
+
+    actualizarBotonBloqueo(data.bloqueado === true);
+  } catch (err) {
+    console.error("Error al cargar estado de bloqueo:", err);
+  }
+}
+
+function actualizarBotonBloqueo(estaBloqueado) {
+  if (!btnBloquear) return;
+
+  if (estaBloqueado) {
+    btnBloquear.textContent = "🔓 Desbloquear números";
+    btnBloquear.className   = "btn-desbloquear";
+  } else {
+    btnBloquear.textContent = "🔒 Bloquear números";
+    btnBloquear.className   = "btn-bloquear";
+  }
+
+  btnBloquear.dataset.bloqueado = estaBloqueado ? "1" : "0";
+}
+
+async function toggleBloqueo() {
+  const estaBloqueado = btnBloquear.dataset.bloqueado === "1";
+  const nuevoEstado   = !estaBloqueado;
+
+  const accion = nuevoEstado ? "bloquear" : "desbloquear";
+  const confirmar = window.confirm(`¿Seguro que querés ${accion} la selección de números?`);
+  if (!confirmar) return;
+
+  btnBloquear.disabled = true;
+
+  const { error } = await supabaseClient
+    .from("config_rifa")
+    .update({ bloqueado: nuevoEstado })
+    .eq("id", 1);
+
+  if (error) {
+    alert("No se pudo cambiar el estado: " + error.message);
+    btnBloquear.disabled = false;
+    return;
+  }
+
+  actualizarBotonBloqueo(nuevoEstado);
+  btnBloquear.disabled = false;
+  alert(nuevoEstado
+    ? "🔒 Números bloqueados. Los usuarios no pueden seleccionar."
+    : "🔓 Números desbloqueados. Los usuarios pueden seleccionar."
+  );
+}
+
+if (btnBloquear) {
+  btnBloquear.addEventListener("click", toggleBloqueo);
+}
+
+cargarEstadoBloqueo();
+
+
+async function cargarEstadoBloqueo() {
+  try {
+    const { data, error } = await supabaseClient
+      .from("config_rifa")
+      .select("bloqueado")
+      .eq("id", 1)
+      .single();
+
+    if (error) return;
+
+    actualizarBotonBloqueo(data.bloqueado);
+  } catch (err) {
+    console.error("Error al cargar estado de bloqueo:", err);
+  }
+}
+
+function actualizarBotonBloqueo(bloqueado) {
+  if (!btnBloquear) return;
+
+  if (bloqueado) {
+    btnBloquear.textContent = "🔓 Desbloquear números";
+    btnBloquear.className   = "btn-desbloquear";
+  } else {
+    btnBloquear.textContent = "🔒 Bloquear números";
+    btnBloquear.className   = "btn-bloquear";
+  }
+
+  btnBloquear.dataset.bloqueado = bloqueado ? "1" : "0";
+}
+
+async function toggleBloqueo() {
+  const estaBloqueado = btnBloquear.dataset.bloqueado === "1";
+  const nuevoEstado   = !estaBloqueado;
+
+  btnBloquear.disabled = true;
+
+  const { error } = await supabaseClient
+    .from("config_rifa")
+    .update({ bloqueado: nuevoEstado })
+    .eq("id", 1);
+
+  if (error) {
+    alert("No se pudo cambiar el estado: " + error.message);
+    btnBloquear.disabled = false;
+    return;
+  }
+
+  actualizarBotonBloqueo(nuevoEstado);
+  btnBloquear.disabled = false;
+
+  alert(nuevoEstado
+    ? "🔒 Grilla bloqueada. Los usuarios no pueden seleccionar números."
+    : "🔓 Grilla desbloqueada. Los usuarios pueden seleccionar números."
+  );
+}
+
+if (btnBloquear) {
+  btnBloquear.addEventListener("click", toggleBloqueo);
+}
+
+cargarEstadoBloqueo();
