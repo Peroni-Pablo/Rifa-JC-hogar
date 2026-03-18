@@ -750,3 +750,7 @@ body {
   background-position: center center;
   background-repeat: no-repeat;
 }
+
+#infoMensajeExtra {
+  white-space: pre-wrap;
+}
