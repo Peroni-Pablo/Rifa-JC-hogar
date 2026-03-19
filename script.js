@@ -12,9 +12,43 @@ function normalizarEstado(estado) {
 }
 
 // =============================
+// BLOQUEO — fuente de verdad
+// Siempre consulta Supabase y devuelve true/false
+// =============================
+async function cargarBloqueo() {
+  try {
+    const { data, error } = await supabaseClient
+      .from("config_rifa")
+      .select("bloqueado")
+      .eq("id", 1)
+      .single();
+
+    console.log("[bloqueo] data:", data, "| error:", error);
+
+    if (error) {
+      console.warn("[bloqueo] Error al leer config_rifa:", error.message);
+      return false;
+    }
+    if (!data) {
+      console.warn("[bloqueo] No se encontró la fila id=1 en config_rifa");
+      return false;
+    }
+
+    console.log("[bloqueo] valor:", data.bloqueado, "| tipo:", typeof data.bloqueado);
+    return data.bloqueado === true;
+
+  } catch (err) {
+    console.error("[bloqueo] Error inesperado:", err);
+    return false;
+  }
+}
+
+// =============================
 // CARGAR NÚMEROS
 // =============================
 async function cargarNumeros() {
+  const bloqueado = await cargarBloqueo();
+
   const { data, error } = await supabaseClient
     .from("numeros_rifa")
     .select("*")
@@ -37,10 +71,13 @@ async function cargarNumeros() {
     const estado = normalizarEstado(numero.estado);
     boton.classList.add(estado);
 
-    if (estado === "libre") {
+    if (estado === "libre" && !bloqueado) {
       boton.onclick = () => comprarNumero(numero.numero);
     } else {
       boton.disabled = true;
+      if (estado === "libre" && bloqueado) {
+        boton.title = "La selección de números está temporalmente deshabilitada.";
+      }
     }
 
     contenedor.appendChild(boton);
@@ -55,7 +92,7 @@ async function comprarNumero(numero) {
   const bloqueado = await cargarBloqueo();
   if (bloqueado) {
     alert("La selección de números está temporalmente deshabilitada.");
-    cargarNumeros(); // refrescar por si el estado visual está desactualizado
+    await cargarNumeros();
     return;
   }
 
@@ -65,7 +102,7 @@ async function comprarNumero(numero) {
 
   // Pedir teléfono
   const telefono = prompt("Ingrese su número de teléfono (10 dígitos):");
-  if (telefono === null) return; // canceló
+  if (telefono === null) return;
 
   // Validar: exactamente 10 dígitos numéricos
   const soloNumeros = telefono.trim().replace(/\s/g, "");
@@ -158,26 +195,21 @@ async function cargarBanner() {
       .eq("id", 1)
       .single();
 
-    // Si hay error de DB, o no hay fila, o la columna está vacía: no mostrar nada
     if (error) {
       console.warn("cargarBanner: error al leer config_rifa →", error.message);
       return;
     }
 
     if (!data?.imagen_url) {
-      console.info("cargarBanner: no hay imagen_url guardada, no se muestra banner.");
+      console.info("cargarBanner: no hay imagen_url guardada.");
       return;
     }
 
     const banner    = document.getElementById("bannerPresentacion");
     const bannerImg = document.getElementById("bannerImg");
 
-    if (!banner || !bannerImg) {
-      console.warn("cargarBanner: no se encontraron los elementos del banner en el DOM.");
-      return;
-    }
+    if (!banner || !bannerImg) return;
 
-    // Cache-bust al mostrar (no al guardar) para forzar la imagen más reciente
     bannerImg.src        = data.imagen_url + "?t=" + Date.now();
     banner.style.display = "flex";
     document.body.classList.add("banner-abierto");
@@ -208,7 +240,7 @@ async function abrirInfo() {
   const modal = document.getElementById("modalInfo");
   if (!modal) return;
 
-  await cargarInfoRifa(); // siempre trae datos frescos
+  await cargarInfoRifa();
 
   modal.classList.add("mostrar");
   document.body.classList.add("modal-abierto");
@@ -254,6 +286,7 @@ supabaseClient
   .channel("config_rifa_changes")
   .on("postgres_changes", { event: "*", schema: "public", table: "config_rifa" }, () => {
     cargarInfoRifa();
+    cargarNumeros(); // re-renderiza con el estado de bloqueo actualizado
   })
   .subscribe();
 
@@ -263,52 +296,3 @@ supabaseClient
 cargarNumeros();
 cargarInfoRifa();
 cargarBanner();
-
-// =============================
-// BLOQUEO GLOBAL DE NÚMEROS
-// =============================
-async function cargarBloqueo() {
-  try {
-    const { data, error } = await supabaseClient
-      .from("config_rifa")
-      .select("bloqueado")
-      .eq("id", 1)
-      .single();
-
-    if (error || !data) return;
-    window._rifaBloqueada = data.bloqueado === true;
-  } catch (err) {
-    console.error("Error al cargar estado de bloqueo:", err);
-  }
-}
-
-// Aplicar bloqueo después de renderizar los botones
-const _cargarNumerosOriginal = cargarNumeros;
-cargarNumeros = async function() {
-  await _cargarNumerosOriginal();
-  if (window._rifaBloqueada) aplicarBloqueoVisual();
-};
-
-function aplicarBloqueoVisual() {
-  const botones = document.querySelectorAll("#numeros button.libre");
-  botones.forEach(btn => {
-    btn.disabled = true;
-    btn.classList.add("bloqueado-global");
-  });
-}
-
-// Tiempo real: si el admin cambia el bloqueo, se actualiza en index al instante
-supabaseClient
-  .channel("config_bloqueo_changes")
-  .on("postgres_changes", { event: "UPDATE", schema: "public", table: "config_rifa" }, async (payload) => {
-    if (payload.new && typeof payload.new.bloqueado !== "undefined") {
-      window._rifaBloqueada = payload.new.bloqueado === true;
-      await _cargarNumerosOriginal();
-      if (window._rifaBloqueada) aplicarBloqueoVisual();
-    }
-  })
-  .subscribe();
-
-cargarBloqueo().then(() => {
-  if (window._rifaBloqueada) aplicarBloqueoVisual();
-});
