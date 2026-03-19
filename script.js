@@ -51,6 +51,12 @@ async function cargarNumeros() {
 // RESERVAR NÚMERO
 // =============================
 async function comprarNumero(numero) {
+  const bloqueado = await cargarBloqueo();
+  if (bloqueado) {
+    alert("La selección de números está temporalmente deshabilitada.");
+    return;
+  }
+  
   // Pedir nombre
   const nombre = prompt("Ingrese su nombre:");
   if (!nombre || !nombre.trim()) return;
